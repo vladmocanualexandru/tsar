@@ -1,0 +1,267 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Hello World</title>
+  <style>* {padding: 0; margin: 0}</style>
+</head>
+  <script src="pixi/pixi.min.js"></script>
+  <script src="commons.js"></script>
+<body>
+  <script type="text/javascript">
+
+    let SPEED = 1
+    // let PLAYER_INITIAL_X = 200
+    let PLAYER_INITIAL_X
+    // let PLAYER_INITIAL_Y = 200
+    let PLAYER_INITIAL_Y
+    let RANGE_RADIUS = 100
+
+    //Aliases
+    let Application = PIXI.Application,
+        Container = PIXI.Container,
+        loader = PIXI.loader,
+        resources = PIXI.loader.resources,
+        textureCache = PIXI.utils.TextureCache,
+        Sprite = PIXI.Sprite,
+        Rectangle = PIXI.Rectangle,
+        TextStyle = PIXI.TextStyle,
+        Text = PIXI.Text,
+        Graphics = PIXI.Graphics,
+        Renderer = PIXI.Renderer;
+
+    let mousePosition = {x:0, y:0}
+
+    //Create a Pixi Application
+    let app = new Application({ 
+        width: window.innerWidth, 
+        height: window.innerHeight,                       
+        antialias: true, 
+        transparent: false, 
+        resolution: 1
+      });
+
+    app.renderer.view.style.position = "absolute";
+    app.renderer.view.style.display = "block";
+    app.renderer.autoResize = true;
+
+    PLAYER_INITIAL_X = window.innerWidth/2
+    PLAYER_INITIAL_Y = window.innerHeight/2
+
+    // app.view.interactive = true;
+
+    app.stage.interactive = true;
+    app.stage.on("mousemove", function(e){  
+        mousePosition = e.data.global
+    })
+
+    //Add the canvas that Pixi automatically created for you to the HTML document
+    document.body.appendChild(app.view);
+
+    
+    // app.renderer.resize(window.innerWidth, window.innerHeight);
+
+    //load an image and run the `setup` function when it's done
+    loader
+      .add("background", "images/background.png")
+      .add("playerSpriteSheet", "images/player_spritesheet.png")
+      // .on("progress", loadProgressHandler)
+      .load(setup);
+
+    // function loadProgressHandler(loader) {
+    //   console.log(`Loading ${loader.progress}%`); 
+    // }
+
+    let animationFrames = {
+      up: [],
+      right: [],
+      down: [],
+      left: []
+    }
+
+    let player, player_char, player_melee_range, player_throw_trajectory, player_direction = animationFrames.down, player_moving = false, state, melee_activated;
+    let spritesheet;
+
+    //This `setup` function will run when the image has loaded
+    function setup() {
+
+      let background = new PIXI.Sprite(loader.resources.background.texture);
+      app.stage.addChild(background);
+
+      player_throw_trajectory = new Graphics();
+      app.stage.addChild(player_throw_trajectory);
+
+      player_melee_range = new Graphics();
+      player_melee_range.lineStyle(4, 0xFF00FF, 0);
+      player_melee_range.beginFill(0xFF0000, 0);
+      player_melee_range.drawCircle(0, 0, RANGE_RADIUS);
+      player_melee_range.endFill();
+      player_melee_range.x = 17;
+      player_melee_range.y = 29;
+      player_melee_range.interactive = true;
+
+      player_melee_range.on("mouseover", function(e){  
+        melee_activated = true
+      })
+      
+      player_melee_range.on("mouseout", function(e){  
+        melee_activated = false
+      })
+      
+      let player_shadow = new Graphics();
+      player_shadow.beginFill(0x000000, 0.3);
+      player_shadow.drawEllipse(0, 0, 20, 7);
+      player_shadow.endFill();
+      player_shadow.x = 17;
+      player_shadow.y = 58;
+      
+
+      spritesheet = resources.playerSpriteSheet.texture
+      for (let i=0; i<5; i++) {
+        animationFrames.up.push(new Rectangle(i*35, 0, 35, 58))
+        animationFrames.right.push(new Rectangle(i*35, 58, 35, 58))
+        animationFrames.down.push(new Rectangle(i*35, 116, 35, 58))
+        animationFrames.left.push(new Rectangle(i*35, 174, 35, 58))
+      }
+      
+      spritesheet.frame = animationFrames.down[0]
+
+      player_char = new PIXI.Sprite(spritesheet);
+      player_char.x = 0
+      player_char.y = 0
+     
+
+      // app.stage.addChild(player);
+      
+      player = new Container(); 
+      player.addChild(player_shadow)
+      player.addChild(player_melee_range)
+      player.addChild(player_char)
+      player.x = PLAYER_INITIAL_X;
+      player.y = PLAYER_INITIAL_Y;
+      player.vx = 0;
+      player.vy = 0;
+
+      app.stage.addChild(player);
+      
+      
+
+      //Capture the keyboard arrow keys
+      let left = keyboard("a"),
+          up = keyboard("w"),
+          right = keyboard("d"),
+          down = keyboard("s");
+
+      //Left arrow key `press` method
+      left.press = () => {
+        //Change the cat's velocity when the key is pressed
+        player.vx = 0-SPEED;
+        player.vy = 0;
+
+        player_moving = true
+        player_direction = animationFrames.left
+      };
+      
+      //Left arrow key `release` method
+      left.release = () => {
+        //If the left arrow has been released, and the right arrow isn't down,
+        //and the cat isn't moving vertically:
+        //Stop the cat
+        if (!right.isDown && player.vy === 0) {
+          player_moving = false
+          player.vx = 0;
+        }
+      };
+
+      //Up
+      up.press = () => {
+        player.vy = 0-SPEED;
+        player.vx = 0;
+
+        player_moving = true
+        player_direction = animationFrames.up
+      };
+      up.release = () => {
+        if (!down.isDown && player.vx === 0) {
+          player_moving = false
+          player.vy = 0;
+        }
+      };
+
+      //Right
+      right.press = () => {
+        player.vx = SPEED;
+        player.vy = 0;
+
+        player_moving = true
+        player_direction = animationFrames.right
+      };
+      right.release = () => {
+        if (!left.isDown && player.vy === 0) {
+          player_moving = false
+          player.vx = 0;
+        }
+      };
+
+      //Down
+      down.press = () => {
+        player.vy = SPEED;
+        player.vx = 0;
+
+        player_moving = true
+        player_direction = animationFrames.down
+      };
+      down.release = () => {
+        if (!up.isDown && player.vx === 0) {
+          player_moving = false
+          player.vy = 0;
+        }
+      };
+
+      state = play;
+
+      app.ticker.add(delta => gameLoop(delta));
+    }
+
+    let counter = 0;
+    function gameLoop(delta){
+      counter = (counter+1)%60
+      state(delta)
+    }
+
+    function play(delta) {
+      if (player_moving) {
+        spritesheet.frame = player_direction[Math.floor(counter/12)]
+      } else { 
+        spritesheet.frame = player_direction[0]
+      }
+
+      player_char.setTexture(spritesheet)
+      player.x += player.vx;
+      player.y += player.vy;
+
+      player_melee_range.clear();
+      player_throw_trajectory.clear()
+      
+      if (melee_activated) {
+        player_melee_range.lineStyle(4, 0xFF0000, 0.2);
+        player_melee_range.beginFill(0xFF0000, 0);
+        player_melee_range.drawCircle(0, 0, RANGE_RADIUS);
+        player_throw_trajectory.lineStyle(4, 0xFF0000, 0);
+      } else {
+        player_melee_range.lineStyle(4, 0xFF0000, 0);
+        player_melee_range.beginFill(0xFF0000, 0);
+        player_melee_range.drawCircle(0, 0, RANGE_RADIUS);
+        player_throw_trajectory.lineStyle(4, 0xFF0000, 0.2);
+        
+      }
+      
+      player_throw_trajectory.moveTo(player.x+17, player.y+29);
+      player_throw_trajectory.lineTo(mousePosition.x, mousePosition.y);
+      player_melee_range.endFill();
+    }
+
+    
+  </script>
+</body>
+</html>

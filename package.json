@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@pixi/graphics-extras": "^5.3.3"
+  }
+}
