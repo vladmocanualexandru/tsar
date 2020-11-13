@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "@pixi/graphics-extras": "^5.3.3"
+    "@pixi/graphics-extras": "^5.3.3",
+    "http-server": "^0.12.3",
+    "live-server": "^1.2.1"
   }
 }
