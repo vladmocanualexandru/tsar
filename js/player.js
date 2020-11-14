@@ -1,4 +1,4 @@
-let player, player_shadow, player_char, player_melee_range, player_throw_trajectory, player_direction, player_moving = false, melee_activated
+let player, player_shadow, player_char, player_melee_range, player_throw_trajectory, player_direction, player_moving = false, melee_activated, player_speed
 let player_animationFrames = {
     up: [],
     right: [],
@@ -6,9 +6,11 @@ let player_animationFrames = {
     left: []
   }
 
-function initPlayer(rangeRadius, spritesheet){
+function initPlayer(rangeRadius, speed, spritesheet){
     player_throw_trajectory = new aliases.Graphics();
-      
+    
+    player_speed = speed
+
     player_melee_range = new aliases.Graphics();
     player_melee_range.lineStyle(4, 0xFF00FF, 0);
     player_melee_range.beginFill(0xFF0000, 0);
@@ -150,8 +152,8 @@ function updatePlayerPosition(frameCounter, rangeRadius, mouse){
         player_char.texture = player_direction[0]
       }
       
-      player.x += player.vx;
-      player.y += player.vy;
+      player.x += player.vx*player_speed;
+      player.y += player.vy*player_speed;
       
       player_melee_range.clear();
       player_throw_trajectory.clear()

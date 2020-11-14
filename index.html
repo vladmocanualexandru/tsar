@@ -15,6 +15,8 @@
   <script type="text/javascript">
 
     const RANGE_RADIUS = 100
+    const PLAYER_SPEED = 2
+    const ENEMY_SPEED = 1
     const ENEMIES = 5
 
     let mousePosition = {x:0, y:0}, app = buildApplication(), spritesheet, state, frameCounter = 0;
@@ -24,18 +26,20 @@
     aliases.loader
       .add("background", "images/background.png")
       .add("playerSpriteSheet", "images/player_spritesheet.png")
+      .add("enemySpriteSheet", "images/enemy_melee_spritesheet.png")
       .on("progress", loader => {
         console.log(`Loading ${loader.progress}%`); 
       })
       .load(function(){
         app.stage.addChild(new aliases.Sprite(aliases.loader.resources.background.texture));
       
-        spritesheet = aliases.resources.playerSpriteSheet.texture
-
-        initPlayer(RANGE_RADIUS, spritesheet)
+        playerSpritesheet = aliases.resources.playerSpriteSheet.texture
+        
+        initPlayer(RANGE_RADIUS, PLAYER_SPEED, playerSpritesheet)
         addPlayerToStage(app.stage)
-
-        initEnemies(ENEMIES, spritesheet)
+        
+        enemySpritesheet = aliases.resources.enemySpriteSheet.texture
+        initEnemies(ENEMIES, ENEMY_SPEED, enemySpritesheet)
         addEnemiesToStage(app.stage)
 
         state = play;

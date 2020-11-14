@@ -6,7 +6,7 @@ let enemy_animationFrames = {
     left: []
   }
 
-function initEnemies(noOfEnemies, spritesheet){
+function initEnemies(noOfEnemies, enemySpeed, spritesheet){
 
     for (let i=0; i<5; i++) {
         let tex = new aliases.Texture(spritesheet)
@@ -30,6 +30,7 @@ function initEnemies(noOfEnemies, spritesheet){
         let enemy = {}
 
         enemy.direction = enemy_animationFrames.down
+        enemy.speed = enemySpeed
 
         enemy.shadow = new aliases.Graphics();
         enemy.shadow.beginFill(0x000000, 0.3);
@@ -68,15 +69,35 @@ function updateEnemiesPosition(spritesheet, frameCounter, rangeRadius, mouse){
 
     enemies.forEach(enemy => {
 
-        if (frameCounter%120 == 0) {
+        if (frameCounter%240 == 0) {
             let randomDirection = Math.round(Math.random()*3)
-            if (randomDirection == 0) enemy.direction = enemy_animationFrames.up;
-            if (randomDirection == 1) enemy.direction = enemy_animationFrames.right;
-            if (randomDirection == 2) enemy.direction = enemy_animationFrames.down;
-            if (randomDirection == 3) enemy.direction = enemy_animationFrames.left;
+
+            if (randomDirection == 0) { 
+                enemy.direction = enemy_animationFrames.up; 
+                enemy.container.vx = 0;
+                enemy.container.vy = -1;
+            }
+            if (randomDirection == 1) { 
+                enemy.direction = enemy_animationFrames.right; 
+                enemy.container.vx = 1;
+                enemy.container.vy = 0;
+            }
+            if (randomDirection == 2) { 
+                enemy.direction = enemy_animationFrames.down; 
+                enemy.container.vx = 0;
+                enemy.container.vy = 1;
+            }
+            if (randomDirection == 3) { 
+                enemy.direction = enemy_animationFrames.left; 
+                enemy.container.vx = -1;
+                enemy.container.vy = 0;
+            }
         }
 
         enemy.char.texture = enemy.direction[Math.floor((frameCounter%60)/12)]
+
+        enemy.container.x += enemy.container.vx*enemy.speed;
+        enemy.container.y += enemy.container.vy*enemy.speed;
     });
 
     // if (player_moving) {
